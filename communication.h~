@@ -1,0 +1,4 @@
+#include "subscriber.h"
+
+void send_client(const Subscriber &sub, const char *article);
+

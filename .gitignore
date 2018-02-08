@@ -1,0 +1,15 @@
+*.idea
+*.o
+*.d
+*.elf
+*.hex
+*.eep
+*.sym
+*.bin
+*.lss
+*.map
+*.bak
+*.class
+*.a
+CMakeLists.txt
+cmake-build-debug/
