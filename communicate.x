@@ -1,41 +1,20 @@
-const MAXSTRING = 12;
-const MAX_LENGTH = 15;
+program  COMMUNICATE_PROG {
+    version COMMUNICATE_VERSION
+        {
 
-typedef string ip<MAX_LENGTH>;
-typedef string article<MAXSTRING>;
+/* Client IP, port */
 
-struct trig {
-int port;
-ip addr;
+int JOIN(string, int) = 1;
+/* Client IP, port */
+int LEAVE(string, int) = 2;
+/* Client IP, port, article */
+int SUBSCRIBE(string, int, string) = 3;
+/* Client IP, port, article */
+int UNSUBSCRIBE(string, int, string) = 4;
+/* article, Client IP, port */
+int PUBLISH(string, string, int) = 5;
+/* IP, port */
 
-};
-
-struct pub {
-
-article art;
-ip addr;
-int port;
-
-};
-
-struct sub {
-
-ip addr;
-int port;
-article arti;
-
-};
-
-program COMMUNICATE_PROG {
-	version COMMUNICATE_VERSION {
-
-	bool JOIN(trig) = 1;
-	bool LEAVE(trig) = 2;
-	bool SUBSCRIBE(sub) = 3;
-	bool UNSUBSCRIBE(sub) = 4;
-	bool PUBLISH(pub) = 5;
-	bool PING() = 6;
-
-	} = 1;
-	
-} = 0x42424242;
+int PING() = 6;
+} = 1;
+} = 0x20000001;
