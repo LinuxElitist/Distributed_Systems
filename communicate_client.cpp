@@ -24,19 +24,20 @@ public:
   int pingtoserver = 5; //To be changed maybe
   void join (char *ip , int port);
   void leave (char *ip , int port);
-  void subscribe (char *ip , int port , Article art);
-  void unsubscribe (char *ip , int port , Article art);
-  void publish (Article art , char *ip , int port);
+  //void subscribe (char *ip , int port , Article art);
+  //void unsubscribe (char *ip , int port , Article art);
+  //void publish (Article art , char *ip , int port);
+  void subscribe (char *ip , int port , char *art);
+  void unsubscribe (char *ip , int port , char *art);
+  void publish (char *art , char *ip , int port);
   void ping(void);
 
   Client(char *ip , int port) {
     clnt = clnt_create(SERV_IP,COMMUNICATE_PROG,COMMUNICATE_VERSION, "udp");
-    if (clnt == NULL)
-      {
-        clnt_pcreateerror(SERV_IP);
-        exit(1);
-      }
-    //to be implemented
+    if (clnt == NULL) {
+      clnt_pcreateerror(SERV_IP);
+      exit(1);
+    }
   }
   ~Client() {
     clnt_destroy(clnt);
@@ -51,6 +52,7 @@ void Client::join (char *ip , int port) {
   if (output == NULL) {
     clnt_perror(clnt, "Join failed for server");
   }
+  printf("%d\n",*output);
 }
 
 void Client::leave (char *ip , int port) {
@@ -60,7 +62,9 @@ void Client::leave (char *ip , int port) {
   }
 }
 
-void Client::subscribe (char *ip , int port , Article art) //Check struct
+//change to Article
+//void Client::subscribe (char *ip , int port , Article art) //Check struct
+void Client::subscribe (char *ip , int port , char *art) //Check struct
 {
   auto output = subscribe_1(ip,port,art,clnt);
   if (output == NULL) {
@@ -68,7 +72,9 @@ void Client::subscribe (char *ip , int port , Article art) //Check struct
   }
 }
 
-void Client::unsubscribe (char *ip , int port ,Article art) //Check struct
+//change to Article
+//void Client::unsubscribe (char *ip , int port ,Article art) //Check struct
+void Client::unsubscribe (char *ip , int port ,char *art) //Check struct
 {
   auto output = unsubscribe_1(ip,port,art,clnt);
   if (output == NULL) {
@@ -76,7 +82,9 @@ void Client::unsubscribe (char *ip , int port ,Article art) //Check struct
   }
 }
 
-void Client::publish (Article art , char *ip , int port) //Check struct
+//change to Article
+//void Client::publish (Article art , char *ip , int port) //Check struct
+void Client::publish (char *art , char *ip , int port) //Check struct
 {
   auto output = publish_1(art,ip,port,clnt);
   if (output == NULL) {
@@ -103,6 +111,14 @@ int main(int argc, char* argv[]) {
   }
   int *output;
   char *client_ip = (char*)argv[1];
-  int client_port = *argv[2];
+  int client_port = stoi(argv[2]);
+
+  //sscanf(argv[2], "%d", &client_port);
+  fprintf(stderr, "port after conversion: %d\n",client_port);
   Client conn(client_ip, client_port);
+  conn.join(client_ip, client_port);
+  conn.subscribe(client_ip, client_port, "A;B;C;D");
+  conn.subscribe(client_ip, client_port, "A;B;C;D");
+//  conn.leave(client_ip, client_port);
+
 }

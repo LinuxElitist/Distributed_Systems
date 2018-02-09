@@ -6,24 +6,27 @@
 
 #include "communicate.h"
 #include "article.h"
-#include "subscribe.h"
 #include "communication.h"
+#include <iostream>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 std::set<Subscriber> subs_list;
 
 int *
 join_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
-	static int  result;
+	static int result;
 
 	Subscriber sub(ip,port);
 	subs_list.insert(sub);
 
-	result =0;
+	result =23;
+	std::cout << ip << " Joined at " << port << "\n";
 	/*
 	 * insert server code here
 	 */
-
 	return &result;
 }
 
@@ -37,7 +40,12 @@ leave_1_svc(char *ip, int port,  struct svc_req *rqstp)
 	auto client = subs_list.find(leaving_sub);
 	if(client != subs_list.end()){
 	  subs_list.erase(client);
-	  result =0;
+		std::cout << ip << " Left " << port << "\n";
+	  result = 0;
+	}
+	else {
+		std::cout << ip << " should be joined for it to leave\n";
+		result = -1;
 	}
 	/*
 	 * insert server code here
@@ -53,13 +61,13 @@ subscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 	Subscriber sub(ip, port);
 	Article art(article);
 	art.content = "";
-	result =1 ;
 
 	auto sub_it = subs_list.find(sub);
 	if (sub_it != subs_list.end())
 	  {
 	    (*sub_it).articles.insert(art);
 	    result = 0;
+			std::cout << ip << " subscribed for " << art.content << "\n";
 	  }
 
 
@@ -67,6 +75,7 @@ subscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 	 * insert server code here
 	 */
 
+ // std::cout << " Wrong Format for Subscription (should not have content)\n";
 	return &result;
 }
 
@@ -102,7 +111,7 @@ publish_1_svc(char *article, char *ip, int port,  struct svc_req *rqstp)
 	Subscriber sub(ip, port);
 	Article art(article);
 	result =0;
-	
+
 	for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it)
 	  {
 	    if ((*sub_it).isSubs(art))
