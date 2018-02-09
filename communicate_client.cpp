@@ -10,7 +10,7 @@
 #include "article.h"
 /*yet to do this */
 
-//#define SERV_IP "127.0.0.1"
+#define SERV_IP "127.0.0.1"
 #define PORT 5105
 #define BUFLEN 512
 
@@ -20,7 +20,7 @@ class Client {
 
 public:
   CLIENT *clnt;
-  char *host = "127.0.0.1";
+  //char *host = "127.0.0.1";
   int pingtoserver = 5; //To be changed maybe
   void join (char *ip , int port);
   void leave (char *ip , int port);
@@ -29,18 +29,18 @@ public:
   void publish (Article art , char *ip , int port);
   void ping(void);
 
-//#ifndef	DEBUG
-  clnt = clnt_create(host,COMMUNICATE_PROG,COMMUNICATE_VERSION, "udp");
-  if (clnt == NULL)
-    {
-      clnt_pcreateerror(host);
-      exit(1);
-    }
-//#endif	/* DEBUG */
-  //to be implemented
-  ~Client() {
+  Client(char *ip , int port) {
+    clnt = clnt_create(SERV_IP,COMMUNICATE_PROG,COMMUNICATE_VERSION, "udp");
+    if (clnt == NULL)
+      {
+        clnt_pcreateerror(SERV_IP);
+        exit(1);
+      }
+    //to be implemented
   }
-
+  ~Client() {
+    clnt_destroy(clnt);
+  }
 };
 
 
@@ -60,7 +60,7 @@ void Client::leave (char *ip , int port) {
   }
 }
 
-void Client::subscribe (char *ip , int port ,Article art) //Check struct
+void Client::subscribe (char *ip , int port , Article art) //Check struct
 {
   auto output = subscribe_1(ip,port,art,clnt);
   if (output == NULL) {
@@ -91,14 +91,9 @@ void Client::ping() {
   }
 }
 
-//#ifndef	DEBUG
-clnt_destroy(clnt);
-//#endif	/* DEBUG */
-
 void listen_for_article() {
   struct sockaddr_in message;
 }
-
 
 int main(int argc, char* argv[]) {
 
@@ -108,8 +103,6 @@ int main(int argc, char* argv[]) {
   }
   int *output;
   char *client_ip = (char*)argv[1];
-  /* Dont know if this port assignment will work*/
   int client_port = *argv[2];
-  //Client conn(client_ip, client_port);
-  join(client_ip, client_port);
+  Client conn(client_ip, client_port);
 }
