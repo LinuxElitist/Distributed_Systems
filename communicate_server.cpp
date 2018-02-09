@@ -81,9 +81,9 @@ unsubscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 	auto sub_it = subs_list.find(sub);
 	if (sub_it != subs_list.end())
 	  {
-	    if ((*sub_it).isSubbed(art)) {
+	    if ((*sub_it).isSubs(art)) {
 
-	      (*sub_it).unSub(art);
+	      (*sub_it).unSubs(art);
 	      result = 0;
 	    }
 
@@ -105,7 +105,7 @@ publish_1_svc(char *article, char *ip, int port,  struct svc_req *rqstp)
 	
 	for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it)
 	  {
-	    if ((*sub_it).isSubbed(art))
+	    if ((*sub_it).isSubs(art))
 	      {
 		send_client((*sub_it), article);
 	      }
