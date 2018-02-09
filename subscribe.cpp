@@ -4,6 +4,7 @@
 
 using std::string;
 using std::set;
+
 using std::tie;
 
 bool operator<(const Subscriber &lhs, const Subscriber &rhs)
@@ -17,7 +18,7 @@ Subscriber::Subscriber(string ip, int port)
   this->port = port;
 }
 
-bool Subscriber::isSubbed(const Article &art) const
+bool Subscriber::isSubs(const Article &art) const
 {
   if (articles.find(art) != articles.end())
     {
@@ -36,7 +37,7 @@ bool Subscriber::isSubbed(const Article &art) const
   return false;
 }
 
-void Subscriber::unSub(const Article &art) const
+void Subscriber::unSubs(const Article &art) const
 {
   auto art_it = articles.find(art);
   if (art_it != articles.end())
@@ -45,7 +46,7 @@ void Subscriber::unSub(const Article &art) const
     }
 }
 
-void Subscriber::printArts() const
+void Subscriber::print() const
 {
   for (auto it = articles.begin(); it != articles.end(); ++it)
     {

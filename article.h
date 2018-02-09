@@ -1,5 +1,5 @@
 #pragma once
-
+1;4205;0c
 #include <vector>
 #include <string>
 #include <cstdio>
@@ -20,9 +20,8 @@ public:
 
 private:
 
-  void stringsplit(
-			  const std::vector<std::string> &in, int i, std::string prev,
-			  std::vector<Article> &outs) const;
+  void stringsplit(const std::vector<std::string> &in, int i, std::string prev,
+			  std::vector<Article> &outs ) const;
 };
 
 /* Comparator struct used by set */

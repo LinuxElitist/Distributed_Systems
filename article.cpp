@@ -2,25 +2,25 @@
 #include <cstdio>
 #include <tuple>
 
-using std::vector;
 using std::string;
-using std::tie;
+using std::tie; //using tie creating tuple for references
+using std::vector;
 
 
-vector<string> split(string s, char delim)
+vector<string> split(string str, char tok)
 {
   vector<string> strings;
   string tmp = "";
   for (int i = 0; i < s.length(); i++)
     {
-      if (s[i] == delim)
+      if (str[i] == tok)
 	{
 	  strings.push_back(tmp);
 	  tmp = "";
 	}
       else
 	{
-	  tmp += s[i];
+	  tmp += str[i];
 	}
     }
 
@@ -29,13 +29,13 @@ vector<string> split(string s, char delim)
   return strings;
 }
 
+//comparision
+
 bool operator<(const Article &lhs, const Article &rhs)
 {
   return tie(lhs.type, lhs.orig, lhs.org) < tie(rhs.type, rhs.orig, rhs.org);
 }
 
-/* Implementation */
-/* Split based on ';'. Should be 4 parts */
 Article::Article(string art)
 {
   auto strings = split(art, ';');
