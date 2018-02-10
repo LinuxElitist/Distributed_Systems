@@ -10,140 +10,138 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string>
 #include <string.h>
 
-std::set<Subscriber> subs_list;
+
+std::set <Subscriber> subs_list;
+std::set <std::string> legal_types(
+        {"sports", "lifestyle", "entertainment", "business", "technology", "science", "politics", "health", ""});
 
 int *
-join_1_svc(char *ip, int port,  struct svc_req *rqstp)
-{
-	static int result;
+join_1_svc(char *ip, int port, struct svc_req *rqstp) {
+    static int result;
 
-	Subscriber sub(ip,port);
-	subs_list.insert(sub);
+    Subscriber sub(ip, port);
+    subs_list.insert(sub);
 
-	result = 0;
-	std::cout << ip << " Joined at " << port << "\n";
-	/*
-	 * insert server code here
-	 */
-	return &result;
+    result = 0;
+    std::cout << ip << " Joined at " << port << "\n";
+
+    return &result;
 }
 
 int *
-leave_1_svc(char *ip, int port,  struct svc_req *rqstp)
-{
-	static int  result;
-	Subscriber leaving_sub(ip, port);
+leave_1_svc(char *ip, int port, struct svc_req *rqstp) {
+    static int result;
+    Subscriber leaving_sub(ip, port);
 
-	auto client = subs_list.find(leaving_sub);
-	if(client != subs_list.end()){
-	    subs_list.erase(client);
-		std::cout << ip << " Left " << port << "\n";
-	    result = 0;
-	}
-	else {
-		std::cout << ip << " should be joined for it to leave\n";
-	}
-	/*
-	 * insert server code here
-	 */
-
-	return &result;
-}
-
-int *
-subscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
-{
-	static int  result;
-	Subscriber sub(ip, port);
-	Article art(article);
-	art.content = "";
-
-	auto sub_it = subs_list.find(sub);
-	if (sub_it != subs_list.end()) {
-		(*sub_it).articles.insert(art);
-		result = 0;
-		std::cout << ip << " subscribed for \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
-	}
-	else {
-		std::cout << ip << " failed to subscribe for \"" << article << "\n";
-	}
-
-	/*
-	 * insert server code here
-	 */
-
- // std::cout << " Wrong Format for Subscription (should not have content)\n";
-	return &result;
-}
-
-int *
-unsubscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
-{
-	static int  result;
-	Subscriber sub(ip, port);
-	Article art(article);
-
-	auto sub_it = subs_list.find(sub);
-	if (sub_it != subs_list.end()) {
-	    if ((*sub_it).isSubs(art)) {
-		    (*sub_it).unSubs(art);
-	    	result = 0;
-			std::cout << ip << " unsubscribed from \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
-		}
-		else {
-			std::cout << ip << " failed to unsubscribe for \"" << article << "\"\n";
-		}
+    auto client = subs_list.find(leaving_sub);
+    if (client != subs_list.end()) {
+        subs_list.erase(client);
+        std::cout << ip << " Left " << port << "\n";
+        result = 0;
+    } else {
+        std::cout << ip << " should be joined for it to leave\n";
     }
-	else {
-		std::cout << ip << " failed to unsubscribe\n";
-	}
-	/*
-	 * insert server code here
-	 */
 
-	return &result;
+    return &result;
 }
 
 int *
-publish_1_svc(char *article, char *ip, int port,  struct svc_req *rqstp)
-{
-	static int  result;
-	Subscriber sub(ip, port);
-	Article art(article);
-	art.content.append("Contents added\n");
+subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
+    static int result;
+    Subscriber sub(ip, port);
+    Article art(article);
+    if (((art.type == "") && (art.orig == "") && (art.org == "")) or (art.content != "")) {
+        std::cout << ip << " failed to subscribe for \"" << article
+                  << "\" because Wrong Format for Subscription (Atleast one of type, originator or org should be presents and content should be empty)\n";
+    } else if (legal_types.find(art.type) != legal_types.end()) {
+        auto sub_it = subs_list.find(sub);
+        if (sub_it != subs_list.end()) {
+            (*sub_it).articles.insert(art);
+            result = 0;
+            std::cout << ip << " subscribed for \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
+        } else {
+            std::cout << ip << " should be joined for it to be subscribed\n ";
+        }
+    } else {
+        std::cout << ip
+                  << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
+    }
 
-	for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it) {
-	  	if ((*sub_it).isSubs(art)) {
-			send_client((*sub_it), article);
-        	result = 0;
-			std::cout << " Published " << art.content << " to " << ip << "\n";
-		}
-		else{
-			std::cout << " Publish failed to " << ip << "\n";
-		}
-	}
-
-	/*
-
-	 * insert server code here
-	 */
-
-	return &result;
+    /*
+     * insert server code here
+     */
+    return &result;
 }
 
 int *
-ping_1_svc(struct svc_req *rqstp)
-{
-	static int  result;
+unsubscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
+    static int result;
+    Subscriber sub(ip, port);
+    Article art(article);
 
-	result = 0;
-	std::cout << "ping received\n";
+    if ((art.type == "") && (art.orig == "") && (art.org == "")) {
+        std::cout << ip << " failed to subscribe for \"" << article
+                  << "\" because Wrong Format for Subscription (Atleast one of type, originator or org should be present)\n";
+    } else if (legal_types.find(art.type) != legal_types.end()) {
+        auto sub_it = subs_list.find(sub);
+        if (sub_it != subs_list.end()) {
+            if ((*sub_it).isSubs(art)) {
+                (*sub_it).unSubs(art);
+                result = 0;
+                std::cout << ip << " unsubscribed from \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
+            } else {
+                std::cout << ip << " should be subscribed to \"" << article << "\" for unsubscription \n";
+            }
+        } else {
+            std::cout << ip << " should be joined for it to unsubscribe\n";
+        }
+    } else {
+        std::cout << ip
+                  << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
+    }
+    return &result;
+}
 
-	/*
-	 * insert server code here
-	 */
+int *
+publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
+    static int result;
+    Subscriber sub(ip, port);
+    Article art(article);
+    if (((art.type == "") && (art.orig == "") && (art.org == "")) or (art.content == "")) {
+        std::cout << ip << " failed to subscribe for \"" << article
+                  << "\" because Wrong Format for Publish (Atleast one of type, originator ot organization should be presents and contents MUST be present)\n";
+    } else if (legal_types.find(art.type) != legal_types.end()) {
+        for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it) {
+            if ((*sub_it).isSubs(art)) {
+                send_client((*sub_it), article);            ///////pending handling send_client just content or article
+                result = 0;
+                std::cout << " Published \"" << art.content << "\" to " << ip << "\n";
+            } else {
+                std::cout << " Failed to publish contents to " << ip << "\n";
+            }
+        }
+    } else {
+        std::cout << ip
+                  << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
+    }
 
-	return &result;
+    /*
+
+     * insert server code here
+     */
+
+    return &result;
+}
+
+int *
+ping_1_svc(struct svc_req *rqstp) {
+    static int result;
+
+    result = 0;
+    std::cout << "ping received\n";
+
+    return &result;
 }
