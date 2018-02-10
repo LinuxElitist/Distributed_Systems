@@ -11,7 +11,7 @@ vector<string> split(string str, char tok)
 {
   vector<string> strings;
   string tmp = "";
-  for (int i = 0; i < s.length(); i++)
+  for (int i = 0; i < str.length(); i++)
     {
       if (str[i] == tok)
 	{

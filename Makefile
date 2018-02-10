@@ -30,4 +30,4 @@ $(SERVER_APP): $(SVC_SRCS)
 
 clean:
 	rm -f $(SVC_GEN_SRCS) $(CLI_GEN_SRCS) $(XDR_GEN_SRCS) $(CLIENT_APP) \
-	    $(SERVER_APP) pub_sub.h
+	    $(SERVER_APP) communicate.h
