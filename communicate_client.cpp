@@ -11,7 +11,7 @@
 
 #define SERV_IP "127.0.0.1"
 #define PORT 5105
-#define BUFLEN 512
+#define BUFSIZE 512
 
 using namespace std;
 
@@ -20,13 +20,14 @@ class Client {
 public:
   CLIENT *clnt;
   int pingtoserver = 5; //To be changed maybe
+  bool continueListeningThread = false;
   void join (char *ip , int port);
   void leave (char *ip , int port);
   void subscribe (char *ip , int port , char *art);
   void unsubscribe (char *ip , int port , char *art);
   void publish (char *art , char *ip , int port);
   void ping(void);
-
+  std::thread t1;
   Client(char *ip , int port) {
     clnt = clnt_create(SERV_IP,COMMUNICATE_PROG,COMMUNICATE_VERSION, "udp");
     if (clnt == NULL) {
@@ -36,14 +37,54 @@ public:
   }
   ~Client() {
     clnt_destroy(clnt);
+    t1.join();
   }
+  void listen_for_article() {
+
+    struct sockaddr_in message;
+
+    int sockfd;
+    char buf[BUFSIZE];
+    socklen_t length = sizeof(message);
+
+    if ((sockfd=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)  {
+      perror("socket creation failed");
+      exit(1);
+    }
+    memset((char *) &message, 0, sizeof(message));
+    message.sin_family = AF_INET;
+    message.sin_port =htons(PORT); // Port must be defined
+    message.sin_addr.s_addr = inet_addr("134.84.121,102"); //Server must be sent here //TODO
+
+    memset(buf,'\0', BUFSIZE); //TODO define buf and BUFSIZE
+
+    if ( recvfrom (sockfd,buf,strlen(buf),0,(struct sockaddr *)&message, &length) < 0 ) {
+
+      perror("Did not get response from server");
+
+    }
+    puts(buf);
+
+  }  
 };
+
+void Listen(Client *c)
+{
+  // Listen for UDP messages from the server
+  while (c->continueListeningThread){
+    printf("Listening...");
+    c->listen_for_article();
+  }
+}
 
 void Client::join (char *ip , int port) {
   auto output = join_1(ip,port,clnt);
   if (output == NULL) {
     clnt_perror(clnt, "Join failed for server");
   }
+  continueListeningThread = true;
+  t1 = std::thread(Listen,this);
+  
 }
 
 void Client::leave (char *ip , int port) {
@@ -84,9 +125,33 @@ void Client::ping() {
   }
 }
 
-void listen_for_article() {
-  struct sockaddr_in message;
-}
+// void listen_for_article() {
+
+//   struct sockaddr_in message;
+
+//   int sockfd;
+//   char buf[BUFSIZE];
+//   socklen_t length = sizeof(message);
+  
+//   if ((sockfd=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)  {
+//     perror("socket creation failed");
+//     exit(1);
+//   }
+//   memset((char *) &message, 0, sizeof(message));
+//   message.sin_family = AF_INET;
+//   message.sin_port =htons(PORT); // Port must be defined
+//   message.sin_addr.s_addr = inet_addr("134.84.121,102"); //Server must be sent here //TODO
+
+//   memset(buf,'\0', BUFSIZE); //TODO define buf and BUFSIZE
+
+//   if ( recvfrom (sockfd,buf,strlen(buf),0,(struct sockaddr *)&message, &length) < 0 ) {
+
+//     perror("Did not get response from server");
+
+//   }
+//   puts(buf); 
+
+// }
 
 int main(int argc, char* argv[]) {
 
@@ -99,7 +164,9 @@ int main(int argc, char* argv[]) {
   int client_port = stoi(argv[2]);
   int func_number;
   char article_string[1024];
-
+  //  std::thread t1(listen_for_article);
+  //t1.join();
+  
   Client conn(client_ip, client_port);
 
   while(1){
