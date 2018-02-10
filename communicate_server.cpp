@@ -22,7 +22,7 @@ join_1_svc(char *ip, int port,  struct svc_req *rqstp)
 	Subscriber sub(ip,port);
 	subs_list.insert(sub);
 
-	result =23;
+	result = 0;
 	std::cout << ip << " Joined at " << port << "\n";
 	/*
 	 * insert server code here
@@ -35,17 +35,15 @@ leave_1_svc(char *ip, int port,  struct svc_req *rqstp)
 {
 	static int  result;
 	Subscriber leaving_sub(ip, port);
-	result = 1;
 
 	auto client = subs_list.find(leaving_sub);
 	if(client != subs_list.end()){
-	  subs_list.erase(client);
+	    subs_list.erase(client);
 		std::cout << ip << " Left " << port << "\n";
-	  result = 0;
+	    result = 0;
 	}
 	else {
 		std::cout << ip << " should be joined for it to leave\n";
-		result = -1;
 	}
 	/*
 	 * insert server code here
@@ -63,13 +61,14 @@ subscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 	art.content = "";
 
 	auto sub_it = subs_list.find(sub);
-	if (sub_it != subs_list.end())
-	  {
-	    (*sub_it).articles.insert(art);
-	    result = 0;
-			std::cout << ip << " subscribed for " << art.content << "\n";
-	  }
-
+	if (sub_it != subs_list.end()) {
+		(*sub_it).articles.insert(art);
+		result = 0;
+		std::cout << ip << " subscribed for \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
+	}
+	else {
+		std::cout << ip << " failed to subscribe for \"" << article << "\n";
+	}
 
 	/*
 	 * insert server code here
@@ -85,18 +84,21 @@ unsubscribe_1_svc(char *ip, int port, char *article,  struct svc_req *rqstp)
 	static int  result;
 	Subscriber sub(ip, port);
 	Article art(article);
-	result =1;
 
 	auto sub_it = subs_list.find(sub);
-	if (sub_it != subs_list.end())
-	  {
+	if (sub_it != subs_list.end()) {
 	    if ((*sub_it).isSubs(art)) {
-
-	      (*sub_it).unSubs(art);
-	      result = 0;
-	    }
-
-	  }
+		    (*sub_it).unSubs(art);
+	    	result = 0;
+			std::cout << ip << " unsubscribed from \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
+		}
+		else {
+			std::cout << ip << " failed to unsubscribe for \"" << article << "\"\n";
+		}
+    }
+	else {
+		std::cout << ip << " failed to unsubscribe\n";
+	}
 	/*
 	 * insert server code here
 	 */
@@ -110,15 +112,19 @@ publish_1_svc(char *article, char *ip, int port,  struct svc_req *rqstp)
 	static int  result;
 	Subscriber sub(ip, port);
 	Article art(article);
-	result =0;
+	art.content.append("Contents added\n");
 
-	for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it)
-	  {
-	    if ((*sub_it).isSubs(art))
-	      {
-		send_client((*sub_it), article);
-	      }
-	  }
+	for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it) {
+	  	if ((*sub_it).isSubs(art)) {
+			send_client((*sub_it), article);
+        	result = 0;
+			std::cout << " Published " << art.content << " to " << ip << "\n";
+		}
+		else{
+			std::cout << " Publish failed to " << ip << "\n";
+		}
+	}
+
 	/*
 
 	 * insert server code here
@@ -132,7 +138,9 @@ ping_1_svc(struct svc_req *rqstp)
 {
 	static int  result;
 
-	result =0;
+	result = 0;
+	std::cout << "ping received\n";
+
 	/*
 	 * insert server code here
 	 */

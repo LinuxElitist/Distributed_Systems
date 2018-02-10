@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include "communicate.h"
 #include "article.h"
-/*yet to do this */
 
 #define SERV_IP "127.0.0.1"
 #define PORT 5105
@@ -20,13 +19,9 @@ class Client {
 
 public:
   CLIENT *clnt;
-  //char *host = "127.0.0.1";
   int pingtoserver = 5; //To be changed maybe
   void join (char *ip , int port);
   void leave (char *ip , int port);
-  //void subscribe (char *ip , int port , Article art);
-  //void unsubscribe (char *ip , int port , Article art);
-  //void publish (Article art , char *ip , int port);
   void subscribe (char *ip , int port , char *art);
   void unsubscribe (char *ip , int port , char *art);
   void publish (char *art , char *ip , int port);
@@ -44,15 +39,11 @@ public:
   }
 };
 
-
-/*Calling all the server function here */
-
 void Client::join (char *ip , int port) {
   auto output = join_1(ip,port,clnt);
   if (output == NULL) {
     clnt_perror(clnt, "Join failed for server");
   }
-  printf("%d\n",*output);
 }
 
 void Client::leave (char *ip , int port) {
@@ -62,9 +53,7 @@ void Client::leave (char *ip , int port) {
   }
 }
 
-//change to Article
-//void Client::subscribe (char *ip , int port , Article art) //Check struct
-void Client::subscribe (char *ip , int port , char *art) //Check struct
+void Client::subscribe (char *ip , int port , char *art)
 {
   auto output = subscribe_1(ip,port,art,clnt);
   if (output == NULL) {
@@ -72,19 +61,15 @@ void Client::subscribe (char *ip , int port , char *art) //Check struct
   }
 }
 
-//change to Article
-//void Client::unsubscribe (char *ip , int port ,Article art) //Check struct
-void Client::unsubscribe (char *ip , int port ,char *art) //Check struct
+void Client::unsubscribe (char *ip , int port ,char *art)
 {
   auto output = unsubscribe_1(ip,port,art,clnt);
   if (output == NULL) {
-	  clnt_perror(clnt, "Unsubscrbe failed");
+	  clnt_perror(clnt, "Unsubscribe failed");
   }
 }
 
-//change to Article
-//void Client::publish (Article art , char *ip , int port) //Check struct
-void Client::publish (char *art , char *ip , int port) //Check struct
+void Client::publish (char *art , char *ip , int port)
 {
   auto output = publish_1(art,ip,port,clnt);
   if (output == NULL) {
@@ -105,20 +90,49 @@ void listen_for_article() {
 
 int main(int argc, char* argv[]) {
 
-  fprintf(stderr, "number of args: %d\n",argc);
   if (argc < 3) {
-    fprintf(stderr,"check usage:client ip:client port");
+    std::cout << "Usage: ./clientside client_ip client_port\n" ;
+    exit(1);
   }
   int *output;
   char *client_ip = (char*)argv[1];
   int client_port = stoi(argv[2]);
+  int func_number;
+  char article_string[1024];
 
-  //sscanf(argv[2], "%d", &client_port);
-  fprintf(stderr, "port after conversion: %d\n",client_port);
   Client conn(client_ip, client_port);
-  conn.join(client_ip, client_port);
-  conn.subscribe(client_ip, client_port, "A;B;C;D");
-  conn.subscribe(client_ip, client_port, "A;B;C;D");
-//  conn.leave(client_ip, client_port);
 
+  while(1){
+    std::cout << "Please enter what function you want to perform [1-6]:\n" << "Function description\n1 Ping\n2 Join\n3 Subscribe\n4 Unsubscribe\n5 Publish\n6 Leave\n" ;
+    std::cin >> func_number;
+    if((func_number==3)||(func_number==4)||(func_number==5)){
+      std::cout <<"Please enter the article for above function:\n" << "\"Type;Originator;Org;Contents\"\n"
+                << "\tType can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n" ;
+      std::cin >> article_string;
+    }
+
+    switch(func_number){
+      case 1:
+        conn.ping();
+        break;
+      case 2:
+        conn.join(client_ip, client_port);
+        break;
+      case 3:
+        conn.subscribe(client_ip, client_port, article_string);
+        break;
+      case 4:
+        conn.unsubscribe(client_ip, client_port, article_string);
+        break;
+      case 5:
+        conn.publish(article_string, client_ip, client_port);
+        break;
+      case 6:
+        conn.leave(client_ip, client_port);
+        break;
+      default:
+        std::cout << "Wrong format specified. Please retry \n" ;
+        break;
+    }
+  }
 }
