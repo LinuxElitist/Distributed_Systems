@@ -8,9 +8,8 @@
 #include <sys/socket.h>
 #include "communicate.h"
 #include "article.h"
-
-#define SERV_IP "128.101.37.120"
-#define CLNT_IP "128.101.37.47"
+#define SERV_IP "127.0.0.1"
+#define CLNT_IP "127.0.0.1"
 #define SERV_PORT 5105
 #define CLNT_PORT 5114
 #define MAX_ARTICLE_LENGTH 120
@@ -63,19 +62,31 @@ public:
             perror("socket creation failed");
             exit(1);
         }
+	//	int optval = 1;
+	//	setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,(const void *) &optval, sizeof(int));
+	
         memset((char *) &message, 0, sizeof(message));
         message.sin_family = AF_INET;
         message.sin_port = htons(SERV_PORT); // Port must be defined
-        message.sin_addr.s_addr = inet_addr(SERV_IP); //Server must be sent here //TODO
-        socklen_t length = sizeof(message);
+        //message.sin_addr.s_addr = inet_addr(SERV_IP); //Server must be sent here //TODO
+	if (inet_aton(SERV_IP , &message.sin_addr) == 0)
+	  {
+	    fprintf(stderr, "inet_aton() failed\n");
+	    exit(1);
+	  }
+	socklen_t length = sizeof(message);
 
-        bytes_received = recvfrom(sockfd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &message, &length);
-        if ( bytes_received < 0) {
+	memset(buf,'\0',MAX_ARTICLE_LENGTH);
+	
+	if ( recvfrom(sockfd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &message, &length) == -1 ) {
+	// if ( bytes_received < 0) {
             perror("Did not get response from server");
-            close(sockfd);
+	    //            close(sockfd);
             exit(1);
         }
-        std::cout << bytes_received << " bytes received for " << buf << "\n";
+
+  puts(buf);
+  //     std::cout << bytes_received << " bytes received for " << buf << "\n";
 
     }
 
@@ -153,6 +164,8 @@ void Client::join(char *ip, int port) {
     if (*output < 0) {
         clnt_perror(clnt, "Join failed for server");
     }
+    //    continueListeningThread = true;
+    // t1 = std::thread(Listen, this);
 
 }
 
@@ -179,11 +192,13 @@ void Client::unsubscribe(char *ip, int port, char *art) {
 
 void Client::publish(char *art, char *ip, int port) {
     auto output = publish_1(art, ip, port, clnt);
-    continueListeningThread = true;
-    //t1 = std::thread(Listen, this);
+    //    continueListeningThread = true;
+    //t1 = std::thread(Listen, this)
     if (*output < 0) {
         clnt_perror(clnt, "Publish failed");
     }
+    continueListeningThread = true;
+    t1 = std::thread(Listen, this);
     //listen_for_article();
 }
 
@@ -208,7 +223,7 @@ int main(int argc, char *argv[]) {
 
     Client conn(client_ip, client_port);
     std::thread t1(Listen,&conn);
-    t1.join();
+    //    t1.join();
 
     while (1) {
         std::cout << "Please enter what function you want to perform [1-6]:\n"
