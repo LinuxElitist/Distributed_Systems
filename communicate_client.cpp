@@ -8,10 +8,6 @@
 #include <sys/socket.h>
 #include "communicate.h"
 #include "article.h"
-<<<<<<< HEAD
-=======
-
->>>>>>> 57dead3a7d26f3f9d9481fe0809d2b9218baebce
 #define SERV_IP "127.0.0.1"
 #define CLNT_IP "127.0.0.1"
 #define SERV_PORT 5105
@@ -226,14 +222,12 @@ int main(int argc, char *argv[]) {
     char article_string[MAX_ARTICLE_LENGTH];
 
     Client conn(client_ip, client_port);
-<<<<<<< HEAD
-    std::thread t1(Listen,&conn);
+
+    //    std::thread t1(Listen,&conn);
     //    t1.join();
-=======
+    //=======
     //std::thread t1(Listen,&conn);
     //t1.join();
->>>>>>> 57dead3a7d26f3f9d9481fe0809d2b9218baebce
-
     while (1) {
         std::cout << "Please enter what function you want to perform [1-6]:\n"
                   << "Function description\n1 Ping\n2 Join\n3 Subscribe\n4 Unsubscribe\n5 Publish\n6 Leave\n";
