@@ -20,7 +20,7 @@ std::set <std::string> legal_types(
 
 int *
 join_1_svc(char *ip, int port, struct svc_req *rqstp) {
-    static int result;
+    static int result = -1;
 
     Subscriber sub(ip, port);
     subs_list.insert(sub);
@@ -33,7 +33,7 @@ join_1_svc(char *ip, int port, struct svc_req *rqstp) {
 
 int *
 leave_1_svc(char *ip, int port, struct svc_req *rqstp) {
-    static int result;
+    static int result = -1;
     Subscriber leaving_sub(ip, port);
 
     auto client = subs_list.find(leaving_sub);
@@ -50,7 +50,7 @@ leave_1_svc(char *ip, int port, struct svc_req *rqstp) {
 
 int *
 subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
-    static int result;
+    static int result = -1;
     Subscriber sub(ip, port);
     Article art(article);
     if (((art.type == "") && (art.orig == "") && (art.org == "")) or (art.content != "")) {
@@ -78,7 +78,7 @@ subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
 
 int *
 unsubscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
-    static int result;
+    static int result = -1;
     Subscriber sub(ip, port);
     Article art(article);
 
@@ -107,7 +107,7 @@ unsubscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
 
 int *
 publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
-    static int result;
+    static int result = -1;
     Subscriber sub(ip, port);
     Article art(article);
     if (((art.type == "") && (art.orig == "") && (art.org == "")) or (art.content == "")) {
@@ -116,8 +116,7 @@ publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
     } else if (legal_types.find(art.type) != legal_types.end()) {
         for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it) {
             if ((*sub_it).isSubs(art)) {
-                send_client((*sub_it), article);            ///////pending handling send_client just content or article
-                result = 0;
+                result = send_client((*sub_it), article);            ///////pending handling send_client just content or article
                 std::cout << " Published \"" << art.content << "\" to " << ip << "\n";
             } else {
                 std::cout << " Failed to publish contents to " << ip << "\n";
@@ -128,20 +127,15 @@ publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
                   << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
     }
 
-    /*
-
-     * insert server code here
-     */
-
     return &result;
 }
 
 int *
 ping_1_svc(struct svc_req *rqstp) {
-    static int result;
+    static int result = -1;
 
-    result = 0;
     std::cout << "ping received\n";
+    result = 0;
 
     return &result;
 }
