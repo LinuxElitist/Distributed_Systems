@@ -8,10 +8,14 @@
 #include <sys/socket.h>
 #include "communicate.h"
 #include "article.h"
+<<<<<<< HEAD
+=======
+
+>>>>>>> 57dead3a7d26f3f9d9481fe0809d2b9218baebce
 #define SERV_IP "127.0.0.1"
 #define CLNT_IP "127.0.0.1"
 #define SERV_PORT 5105
-#define CLNT_PORT 5114
+#define CLNT_PORT 5105
 #define MAX_ARTICLE_LENGTH 120
 
 using namespace std;
@@ -106,7 +110,7 @@ public:
         }
         int optval = 1;
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval, sizeof(int));
-            
+
         memset((char *) &srvr_addr, 0, sizeof(srvr_addr));
         srvr_addr.sin_family = AF_INET;
         srvr_addr.sin_port = htons(SERV_PORT);
@@ -135,7 +139,7 @@ public:
 			exit(1);
 	    }
 
-   
+
         //memset(buf, '\0', MAX_ARTICLE_LENGTH);
 
         //recvfrom might not work because we dont know the exact number of bytes transferred.
@@ -222,8 +226,13 @@ int main(int argc, char *argv[]) {
     char article_string[MAX_ARTICLE_LENGTH];
 
     Client conn(client_ip, client_port);
+<<<<<<< HEAD
     std::thread t1(Listen,&conn);
     //    t1.join();
+=======
+    //std::thread t1(Listen,&conn);
+    //t1.join();
+>>>>>>> 57dead3a7d26f3f9d9481fe0809d2b9218baebce
 
     while (1) {
         std::cout << "Please enter what function you want to perform [1-6]:\n"
