@@ -69,10 +69,10 @@ public:
         message.sin_addr.s_addr = inet_addr(SERV_IP); //Server must be sent here //TODO
         socklen_t length = sizeof(message);
 
-        bytes_received = recvfrom(fd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &clnt_addr, &length);
+        bytes_received = recvfrom(sockfd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &message, &length);
         if ( bytes_received < 0) {
             perror("Did not get response from server");
-            close(fd);
+            close(sockfd);
             exit(1);
         }
         std::cout << bytes_received << " bytes received for " << buf << "\n";
