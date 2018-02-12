@@ -16,7 +16,6 @@ int  send_client(const Subscriber &sub, const char *buf)
 
   struct addrinfo sendaddr;
   struct addrinfo *res = 0;
-  int bytes_sent=0;
 
   memset(&sendaddr,0,sizeof(sendaddr));
   sendaddr.ai_family = AF_UNSPEC;
@@ -36,13 +35,12 @@ int  send_client(const Subscriber &sub, const char *buf)
       return -1;
     }
 
-  if ((bytes_sent = sendto(fd, buf, strlen(buf), 0, res->ai_addr, res->ai_addrlen)) == -1)
+  if (sendto(fd, buf, strlen(buf), 0, res->ai_addr, res->ai_addrlen) == -1)
     {
       freeaddrinfo(res);
       close(fd);
       return -1;
     }
-  std::cout << "bytes_sent: " << bytes_sent << "\n";
   freeaddrinfo(res);
   close(fd);
 return 0;

@@ -10,7 +10,6 @@
 #include "article.h"
 #include <netinet/in.h>
 #include <netdb.h>
-#define SERV_IP "128.101.37.18"
 #define MAX_ARTICLE_LENGTH 120
 
 using namespace std;
@@ -23,6 +22,7 @@ public:
     bool continueListeningThread = false;
     int sock;
     char article[MAX_ARTICLE_LENGTH];
+
     void join(char *ip, int port);
 
     void leave(char *ip, int port);
@@ -36,12 +36,13 @@ public:
     void ping(void);
 
     std::thread t1;
+    char *serv_ip;
 
-    Client(char *ip, int port) {
-
-        clnt = clnt_create(SERV_IP, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
+    Client(char *ip, int port, char *serv) {
+        serv_ip = serv;
+        clnt = clnt_create(serv_ip, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
         if (clnt == NULL) {
-            clnt_pcreateerror(SERV_IP);
+            clnt_pcreateerror(serv_ip);
             exit(1);
         }
         //join(ip,port);
@@ -73,7 +74,7 @@ public:
       si_other.sin_family = AF_INET;
       si_other.sin_port = htons(port);
 
-      if (inet_aton(SERV_IP , &si_other.sin_addr) == 0)
+      if (inet_aton(serv_ip , &si_other.sin_addr) == 0)
       {
           fprintf(stderr, "inet_aton() failed\n");
           exit(1);
@@ -163,17 +164,19 @@ void Client::ping() {
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 3) {
-        std::cout << "Usage: ./clientside client_ip port udp_port\n";
+    if (argc < 4) {
+        std::cout << "Usage: ./clientside client_ip port server_ip\n";
         exit(1);
     }
     char *client_ip = (char *) argv[1];
     int client_port = stoi(argv[2]);
+    char *serv_ip = (char *) argv[3];
     char func[1];
     int func_number;
     char article_string[MAX_ARTICLE_LENGTH];
 
-    Client conn(client_ip, client_port);
+    Client conn(client_ip, client_port, serv_ip);
+
     while (1) {
         std::cout << "Please enter what function you want to perform [1-6]:\n"
                   << "Function description\n1 Ping\n2 Join\n3 Subscribe\n4 Unsubscribe\n5 Publish\n6 Leave\n";
