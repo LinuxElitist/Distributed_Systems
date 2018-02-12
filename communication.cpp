@@ -24,7 +24,7 @@ int send_client(const Subscriber &sub, const char *buf) {
     struct hostent *hostp; /* client host info */
     char hello[6]; /* message buf */
     char *hostaddrp; /* dotted decimal host addr string */
-    int optval = 1; /* flag value for setsockopt */
+    int optval = 1;
     int result = -1;
     int bytes_sent = 0;
     char padding[MAX_ARTICLE_LENGTH];
@@ -41,11 +41,7 @@ int send_client(const Subscriber &sub, const char *buf) {
         close(fd);
         return result;
     }
-    /* setsockopt: Handy debugging trick that lets
-     * us rerun the server immediately after we kill it;
-     * otherwise we have to wait about 20 secs.
-     * Eliminates "ERROR on binding: Address already in use" error.
-     */
+
 		setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(const void *) &optval, sizeof(int));
 
   //  const char *ip = sub.ip.c_str();
@@ -53,14 +49,14 @@ int send_client(const Subscriber &sub, const char *buf) {
 
     bzero((char *) &serveraddr, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
-    //serveraddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serveraddr.sin_port= htons((unsigned short)UDP_PORT);
-    if (inet_aton(SERV_IP, &serveraddr.sin_addr)==0) {
+/*    if (inet_aton(SERV_IP, &serveraddr.sin_addr)==0) {
         std::cout << "ERROR on inet_aton\n";
         close(fd);
         return result;
     }
-
+*/
     if (bind(fd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0){
         std::cout << "could not bind \n";
         close(fd);
@@ -97,7 +93,7 @@ int send_client(const Subscriber &sub, const char *buf) {
 
     bytes_sent = sendto(fd, padded, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &clientaddr, clientlen);
     if (bytes_sent < 0) {
-        std::cout << "could not receive from client\n";
+        std::cout << "could not send to client\n";
         close(fd);
         return result;
     }
