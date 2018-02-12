@@ -67,7 +67,7 @@ subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
         }
     } else {
         std::cout << ip
-                  << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
+                  << "Type in article should be one of these: <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>>\n ";
     }
     return &result;
 }
@@ -96,7 +96,7 @@ unsubscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
         }
     } else {
         std::cout << ip
-                  << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
+                  << "Type in article should be one of these: <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n ";
     }
     return &result;
 }
@@ -120,7 +120,7 @@ publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
         }
     } else {
         std::cout << ip
-                  << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
+                  << "Type in article should be one of these: <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n ";
     }
 
     return &result;

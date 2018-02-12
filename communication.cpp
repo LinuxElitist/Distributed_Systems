@@ -14,6 +14,17 @@
 using std::to_string;
 
 int send_client(const Subscriber &sub, const char *buf) {
+
+
+    int fd; /* socket */
+    //int port; /* UDP_PORTto listen on */
+    socklen_t clientlen; /* byte size of client's address */
+    struct sockaddr_in serveraddr; /* server's addr */
+    struct sockaddr_in clientaddr; /* client addr */
+    struct hostent *hostp; /* client host info */
+    char hello[6]; /* message buf */
+    char *hostaddrp; /* dotted decimal host addr string */
+    int optval = 1; /* flag value for setsockopt */
     int result = -1;
     int bytes_sent = 0;
     char padding[MAX_ARTICLE_LENGTH];
@@ -24,70 +35,60 @@ int send_client(const Subscriber &sub, const char *buf) {
 
     std::cout << "padded buf " << padded << "\n";
 
-    int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (fd == -1) {
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
         std::cout << "could not create udp socket on server side \n";
         close(fd);
         return result;
     }
-    int optval = 1;
+    /* setsockopt: Handy debugging trick that lets
+     * us rerun the server immediately after we kill it;
+     * otherwise we have to wait about 20 secs.
+     * Eliminates "ERROR on binding: Address already in use" error.
+     */
 		setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(const void *) &optval, sizeof(int));
 
-    const char *ip = sub.ip.c_str();
-    const char *port = (to_string(sub.port)).c_str();
-    struct addrinfo clnt_addr, server_addr;
-    struct addrinfo *res = 0;
-    struct addrinfo *res_serv = 0;
+  //  const char *ip = sub.ip.c_str();
+  //  const char *UDP_PORT= (to_string(sub.port)).c_str();
 
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.ai_family = AF_INET;
-    server_addr.ai_socktype = SOCK_DGRAM;
-    server_addr.ai_protocol = 0;
-    server_addr.ai_flags = AI_ADDRCONFIG;
+    bzero((char *) &serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    serveraddr.sin_port= htons((unsigned short)UDP_PORT);
 
-    if (getaddrinfo(SERV_IP, (to_string(UDP_PORT)).c_str(), &server_addr, &res_serv) != 0) {
-        std::cout << "could not get addrinfo \n";
-        freeaddrinfo(res);
-        freeaddrinfo(res_serv);
+    if (bind(fd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0){
+        std::cout << "could not bind \n";
         close(fd);
         return result;
     }
 
-    memset(&clnt_addr, 0, sizeof(clnt_addr));
-    clnt_addr.ai_socktype = SOCK_DGRAM;
-    clnt_addr.ai_family = AF_INET;
-    clnt_addr.ai_protocol = 0;
-    clnt_addr.ai_flags = AI_ADDRCONFIG;
+    clientlen = sizeof(clientaddr);
 
-    if (getaddrinfo(ip, port, &clnt_addr, &res) != 0) {
-        std::cout << "could not get addrinfo \n";
-        freeaddrinfo(res);
-        freeaddrinfo(res_serv);
+    bzero(hello, 6);
+    int bytes_received = recvfrom(fd, hello, 6, 0, (struct sockaddr *) &clientaddr, &clientlen);
+    if (bytes_received < 0){
+        std::cout << "could not receive from client\n";
         close(fd);
         return result;
     }
 
-    if(bind(fd, res_serv->ai_addr, res_serv->ai_addrlen) < 0){
-        std::cout << "could not bind server\n";
-        freeaddrinfo(res);
-        freeaddrinfo(res_serv);
-        close(fd);
-        return result;
-    }
+    hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
+    if (hostp == NULL)
+        perror("ERROR on gethostbyaddr");
+    hostaddrp = inet_ntoa(clientaddr.sin_addr);
+    if (hostaddrp == NULL)
+        perror("ERROR on inet_ntoa\n");
+    std::cout << "server received datagram from" << hostp->h_name << hostaddrp << "\n";
 
-    bytes_sent = sendto(fd, padded, MAX_ARTICLE_LENGTH, 0, res->ai_addr, res->ai_addrlen);
+
+//TODO..............  put ip from subscribed list            .............
+
+
+    bytes_sent = sendto(fd, padded, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &clientaddr, clientlen);
     if (bytes_sent < 0) {
-        std::cout << "bytes sent: " << bytes_sent << "\n";
-        freeaddrinfo(res);
-        freeaddrinfo(res_serv);
+        std::cout << "could not receive from client\n";
         close(fd);
         return result;
     }
 
-    std::cout << "bytes sent: " << bytes_sent << "\n";
-
-    freeaddrinfo(res);
-    freeaddrinfo(res_serv);
-    close(fd);
-	return 0;
 }

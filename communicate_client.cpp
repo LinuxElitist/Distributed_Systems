@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include "communicate.h"
 #include "article.h"
+#include <netinet/in.h>
+#include <netdb.h>
 #define SERV_IP "127.0.0.1"
 #define MAX_ARTICLE_LENGTH 120
 
@@ -49,40 +51,53 @@ public:
     }
 
     void listen_for_article() {
-        struct sockaddr_in message;
+        struct sockaddr_in serveraddr;
         int sockfd;
+        struct hostent *server;
         char buf[MAX_ARTICLE_LENGTH];
         int bytes_received = 0;
+        socklen_t serverlen;
 
-        if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-            perror("socket creation failed");
+        if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+            std::cout << "socket creation failed\n";
             exit(1);
         }
-    		int optval = 1;
-    		setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,(const void *) &optval, sizeof(int));
 
+        /* gethostbyname: get the server's DNS entry */
+        server = gethostbyname(SERV_IP);
+        if (server == NULL) {
+            std::cout << "ERROR, no such host as " << SERV_IP << "\n";
+            close(sockfd);
+            exit(1);
+        }
 
-        memset((char *) &message, 0, sizeof(message));
-        message.sin_family = AF_INET;
-        message.sin_port = htons(this->udp_port); // Port must be defined
-        //message.sin_addr.s_addr = inet_addr(INADDR_LOOPBACK); //Server must be sent here //TODO
-        if (inet_aton(SERV_IP , &message.sin_addr) == 0) {
-  	        fprintf(stderr, "inet_aton() failed\n");
-  	        exit(1);
-  	    }
-        socklen_t length = sizeof(message);
+        /* build the server's Internet address */
+        bzero((char *) &serveraddr, sizeof(serveraddr));
+        serveraddr.sin_family = AF_INET;
+        bcopy((char *)server->h_addr,
+        (char *)&serveraddr.sin_addr.s_addr, server->h_length);
+        serveraddr.sin_port = htons(this->udp_port);
 
-	      memset(buf,'\0',MAX_ARTICLE_LENGTH);
+        serverlen = sizeof(serveraddr);
 
-        bytes_received = recvfrom(sockfd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &message, &length);
-	      //if( recvfrom(sockfd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &message, &length) == -1 ) {
+        int bytes_sent = sendto(sockfd, "hello", 6, 0, (struct sockaddr *)&serveraddr, serverlen);
+        if (bytes_sent < 0){
+            std::cout << "Could not connect to server\n";
+            close(sockfd);
+            exit(1);
+        }
+
+        bzero(buf, MAX_ARTICLE_LENGTH);
+
+        bytes_received = recvfrom(sockfd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &serveraddr, &serverlen);
 	      if ( bytes_received < 0) {
-            perror("Did not get response from server");
+            std::cout << "Did not get response from server\n";
 	          close(sockfd);
             exit(1);
         }
-        puts(buf);
         std::cout << bytes_received << " bytes received for " << buf << "\n";
+        close(sockfd);
+        continueListeningThread = false;
     }
 };
 
@@ -123,9 +138,9 @@ void Client::unsubscribe(char *ip, int rpc_port, char *art) {
 }
 
 void Client::publish(char *art, char *ip, int rpc_port) {
-    auto output = publish_1(art, ip, rpc_port, clnt);
     continueListeningThread = true;
     t1 = std::thread(Listen, this);
+    auto output = publish_1(art, ip, rpc_port, clnt);
     if (*output < 0) {
         clnt_perror(clnt, "Publish failed");
     }
