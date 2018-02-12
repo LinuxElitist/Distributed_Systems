@@ -10,6 +10,7 @@
 #include "article.h"
 #include <netinet/in.h>
 #include <netdb.h>
+
 #define MAX_ARTICLE_LENGTH 120
 
 using namespace std;
@@ -17,26 +18,25 @@ using namespace std;
 class Client {
 
 public:
-    CLIENT *clnt;
-    int pingtoserver = 5; //To be changed maybe
-    bool continueListeningThread = false;
-    int sock;
-    char article[MAX_ARTICLE_LENGTH];
 
-    void join(char *ip, int port);
 
-    void leave(char *ip, int port);
+  CLIENT *clnt;
+  int PingServer = 5;
+  bool pingthread = false;
+  bool listeningthread = false;
 
-    void subscribe(char *ip, int port, char *art);
+  int sock;
+  char article[MAX_ARTICLE_LENGTH];
 
-    void unsubscribe(char *ip, int port, char *art);
-
-    void publish(char *art, char *ip, int port);
-
-    void ping(void);
-
-    std::thread t1;
-    char *serv_ip;
+  void join(char *ip, int port);
+  void leave(char *ip, int port);
+  void subscribe(char *ip, int port, char *art);
+  void unsubscribe(char *ip, int port, char *art);
+  void publish(char *art, char *ip, int port);
+  void ping(void);
+  std::thread udp_thread;
+  std::thread heartbeat_thread;
+  char *serv_ip;
 
     Client(char *ip, int port, char *serv) {
         serv_ip = serv;
@@ -50,21 +50,20 @@ public:
     }
 
     ~Client() {
-
-        t1.join();
-        clnt_destroy(clnt);
+      heartbeat_thread.join(); 
+      udp_thread.join();
+      clnt_destroy(clnt);
     }
 
     void listen_for_article(int port) {
 
-            // Waits to receive an article message
+       // Waits to receive an article message
       struct sockaddr_in si_other, client_addr;
       int i;
       socklen_t slen=sizeof(si_other);
       int optval=1;
 
-      if ( (sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-      {
+      if ( (sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
           perror("socket");
           exit(1);
       }
@@ -108,10 +107,19 @@ public:
 
 void Listen(Client *c, int port) {
     // Listen for UDP messages from the server
-    while (c->continueListeningThread) {
-        std::cout << "Listening...\n";
+    while (c->listeningthread) {
+        std::cout << "Listening......\n";
         c->listen_for_article(port);
     }
+}
+
+void heartbeat(Client *c) {
+  //Ping(Heartbeat) to server
+  while (c->pingthread) {
+    //std::cout << "Pinging....\n";
+    sleep(c->PingServer);
+    c->ping();
+  }
 }
 
 void Client::join(char *ip, int port) {
@@ -119,8 +127,12 @@ void Client::join(char *ip, int port) {
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Join failed for server");
     }
-    continueListeningThread = true;
-     t1 = std::thread(Listen, this, port);
+    //
+        pingthread = true;
+    heartbeat_thread = std::thread(heartbeat, this);
+
+    listeningthread = true;
+    udp_thread = std::thread(Listen, this, port);
 
   // printf("%s:%d has successfully joined the server.\n", IP, Port);
 }
@@ -160,6 +172,7 @@ void Client::ping() {
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Cannot ping server");
     }
+    //    fprintf(stderr,"Ping successful");
 }
 
 int main(int argc, char *argv[]) {

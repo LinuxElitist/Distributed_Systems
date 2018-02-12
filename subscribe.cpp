@@ -3,29 +3,22 @@
 #include <tuple>
 
 using std::string;
+using std::tie;
 using std::set;
 
-using std::tie;
-
-bool operator<(const Subscriber &lhs, const Subscriber &rhs)
-{
-  return tie(lhs.ip, lhs.port) < tie(rhs.ip, rhs.port);
-}
-
-Subscriber::Subscriber(string ip, int port)
-{
+Subscriber::Subscriber(string ip, int port) {
   this->ip = ip;
   this->port = port;
 }
 
-bool Subscriber::isSubs(const Article &art) const
-{
+bool Subscriber::isSubs(const Article &art) const {
   if (articles.find(art) != articles.end())
     {
       return true;
     }
 
-  auto cats = art.getSuperCats();
+  auto cats = art.getCategory();
+
   for (int i = 0; i < cats.size(); i++)
     {
       if (articles.find(Article(cats[i])) != articles.end())
@@ -37,13 +30,17 @@ bool Subscriber::isSubs(const Article &art) const
   return false;
 }
 
-void Subscriber::unSubs(const Article &art) const
-{
+void Subscriber::unSubs(const Article &art) const {
   auto art_it = articles.find(art);
   if (art_it != articles.end())
     {
       articles.erase(art_it);
     }
+}
+
+
+bool operator<(const Subscriber &lhs, const Subscriber &rhs) {
+  return tie(lhs.ip, lhs.port) < tie(rhs.ip, rhs.port);
 }
 
 void Subscriber::print() const

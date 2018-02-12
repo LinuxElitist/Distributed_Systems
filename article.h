@@ -1,4 +1,6 @@
+/* Needed so that include header is included only once during compilation*/
 #pragma once
+
 #include <vector>
 #include <string>
 #include <cstdio>
@@ -8,14 +10,14 @@ struct Article
 public:
   std::string type, orig, org, content;
 
-  /* Split based on ';'. Should be 4 parts */
+  /* Splitting based on ';'in 4 parts */
   Article(std::string art);
 
-  /* Returns all possible unique combinations of super categories */
-  std::vector<Article> getSuperCats() const;
-
-  std::string getWhole() const;
   void print() const;
+  /* Returns all possible unique combinations of super categories */
+  std::vector<Article> getCategory() const;
+
+  std::string fullString() const;
 
 private:
 

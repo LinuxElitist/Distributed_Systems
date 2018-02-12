@@ -7,8 +7,11 @@ using std::tie; //using tie creating tuple for references
 using std::vector;
 
 
-vector<string> split(string str, char tok)
-{
+bool operator<(const Article &lhs, const Article &rhs) {
+  return tie(lhs.type, lhs.orig, lhs.org) < tie(rhs.type, rhs.orig, rhs.org);
+}
+
+vector<string> split(string str, char tok) {
   vector<string> strings;
   string tmp = "";
   for (int i = 0; i < str.length(); i++)
@@ -27,17 +30,13 @@ vector<string> split(string str, char tok)
   strings.push_back(tmp);
 
   return strings;
+} 
+
+string Article::fullString() const {
+  return type + ";" + orig + ";"+ org + ";"+ content;
 }
 
-//comparision
-
-bool operator<(const Article &lhs, const Article &rhs)
-{
-  return tie(lhs.type, lhs.orig, lhs.org) < tie(rhs.type, rhs.orig, rhs.org);
-}
-
-Article::Article(string art)
-{
+Article::Article(string art) {
   auto strings = split(art, ';');
 
   int s = strings.size();
@@ -54,8 +53,7 @@ Article::Article(string art)
     content = strings[3];
 }
 
-vector<Article> Article::getSuperCats() const
-{
+vector<Article> Article::getCategory() const {
   vector<string> in;
   vector<Article> out;
 
@@ -68,21 +66,9 @@ vector<Article> Article::getSuperCats() const
 }
 
 
-string Article::getWhole() const
-{
-  return type + ";" + orig + ";"+ org + ";"+ content;
-}
-
-void Article::print() const
-{
-  printf("%s\n", getWhole().c_str());
-}
-
-
 void Article::stringsplit(
-				 const vector<string> &in, int i, string prev,
-				 vector<Article> &outs) const
-{
+			  const vector<string> &in, int i, string prev,
+			  vector<Article> &outs) const {
   for (i; i < in.size(); i++)
     {
       stringsplit(in, i + 1, prev + in[i] + ";", outs);
@@ -91,3 +77,9 @@ void Article::stringsplit(
 
   outs.push_back(Article(prev));
 }
+
+void Article::print() const {
+  printf("%s\n", fullString().c_str());
+}
+
+
