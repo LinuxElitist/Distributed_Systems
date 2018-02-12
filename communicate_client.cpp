@@ -58,7 +58,7 @@ public:
         int bytes_received = 0;
         socklen_t serverlen;
         int optval = 1;
-        if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
             std::cout << "socket creation failed\n";
             close(sockfd);
             exit(1);
@@ -113,28 +113,28 @@ void Listen(Client *c) {
 
 void Client::join(char *ip, int rpc_port) {
     auto output = join_1(ip, rpc_port, clnt);
-    if (*output < 0) {
+    if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Join failed for server");
     }
 }
 
 void Client::leave(char *ip, int rpc_port) {
     auto output = leave_1(ip, rpc_port, clnt);
-    if (*output < 0) {
+    if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Leave failed");
     }
 }
 
 void Client::subscribe(char *ip, int rpc_port, char *art) {
     auto output = subscribe_1(ip, rpc_port, art, clnt);
-    if (*output < 0) {
+    if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Subscribe failed");
     }
 }
 
 void Client::unsubscribe(char *ip, int rpc_port, char *art) {
     auto output = unsubscribe_1(ip, rpc_port, art, clnt);
-    if (*output < 0) {
+    if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Unsubscribe failed");
     }
 }
@@ -143,14 +143,14 @@ void Client::publish(char *art, char *ip, int rpc_port) {
     continueListeningThread = true;
     t1 = std::thread(Listen, this);
     auto output = publish_1(art, ip, rpc_port, clnt);
-    if (*output < 0) {
+    if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Publish failed");
     }
 }
 
 void Client::ping() {
     auto output = ping_1(clnt);
-    if (*output < 0) {
+    if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Cannot ping server");
     }
 }
