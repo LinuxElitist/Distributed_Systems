@@ -10,7 +10,7 @@
 #include "article.h"
 #include <netinet/in.h>
 #include <netdb.h>
-#define SERV_IP "128.101.37.15"
+#define SERV_IP "128.101.37.18"
 #define MAX_ARTICLE_LENGTH 120
 
 using namespace std;
@@ -21,170 +21,134 @@ public:
     CLIENT *clnt;
     int pingtoserver = 5; //To be changed maybe
     bool continueListeningThread = false;
-    int udp_port;
-  int sock;
-  char article[MAX_ARTICLE_LENGTH];
-    void join(char *ip, int rpc_port);
+    int sock;
+    char article[MAX_ARTICLE_LENGTH];
+    void join(char *ip, int port);
 
-    void leave(char *ip, int rpc_port);
+    void leave(char *ip, int port);
 
-    void subscribe(char *ip, int rpc_port, char *art);
+    void subscribe(char *ip, int port, char *art);
 
-    void unsubscribe(char *ip, int rpc_port, char *art);
+    void unsubscribe(char *ip, int port, char *art);
 
-    void publish(char *art, char *ip, int rpc_port);
+    void publish(char *art, char *ip, int port);
 
     void ping(void);
 
     std::thread t1;
 
-    Client(char *ip, int rpc_port) {
-  
+    Client(char *ip, int port) {
+
         clnt = clnt_create(SERV_IP, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
         if (clnt == NULL) {
             clnt_pcreateerror(SERV_IP);
             exit(1);
         }
-        //join(ip,rpc_port);
+        //join(ip,port);
          printf("Completed client creation\n");
     }
 
     ~Client() {
-        
+
         t1.join();
         clnt_destroy(clnt);
     }
 
-    void listen_for_article() {
+    void listen_for_article(int port) {
+
+            // Waits to receive an article message
+      struct sockaddr_in si_other, client_addr;
+      int i;
+      socklen_t slen=sizeof(si_other);
+      int optval=1;
+
+      if ( (sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+      {
+          perror("socket");
+          exit(1);
+      }
+      setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(const void *) &optval, sizeof(int));
+
+      memset((char *) &si_other, 0, sizeof(si_other));
+      si_other.sin_family = AF_INET;
+      si_other.sin_port = htons(port);
+
+      if (inet_aton(SERV_IP , &si_other.sin_addr) == 0)
+      {
+          fprintf(stderr, "inet_aton() failed\n");
+          exit(1);
+      }
+
+      bzero((char *) &client_addr, sizeof(client_addr));
+      client_addr.sin_family = AF_INET;
+      client_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+      client_addr.sin_port= htons((unsigned short)port);
+      if (bind(sock, (struct sockaddr *) &client_addr, sizeof(client_addr)) < 0){
+          std::cout << "could not bind \n";
+          close(sock);
+          exit(1);
+      }
 
 
-          // Waits to receive an article message
-    struct sockaddr_in si_other;
-    int i;
-    socklen_t slen=sizeof(si_other);
+      // Clear the buffer by filling null, it might have previously received data
+      memset(article,'\0', MAX_ARTICLE_LENGTH);
 
-    if ( (sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-    {
-        perror("socket");
-        exit(1);
+      // Try to receive some data; This is a blocking call
+      //TODO : add padding
+      if (recvfrom(sock, article, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &si_other, &slen) == -1)
+      {
+          perror("recvfrom()");
+          exit(1);
+      }
+      //puts(article);
+      std::cout << "content received: " << article << "\n";
     }
-
-    memset((char *) &si_other, 0, sizeof(si_other));
-    si_other.sin_family = AF_INET;
-    si_other.sin_port = htons(udp_port);
-
-    if (inet_aton(SERV_IP , &si_other.sin_addr) == 0)
-    {
-        fprintf(stderr, "inet_aton() failed\n");
-        exit(1);
-    }
-    
-
-    // Clear the buffer by filling null, it might have previously received data
-    memset(article,'\0', MAX_ARTICLE_LENGTH);
-
-    // Try to receive some data; This is a blocking call
-    if (recvfrom(sock, article, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &si_other, &slen) == -1)
-    {
-        perror("recvfrom()");
-        exit(1);
-    }
-    puts(article);
-  }
-/*        struct sockaddr_in serveraddr;
-        int sockfd;
-        struct hostent *server;
-        char buf[MAX_ARTICLE_LENGTH];
-        int bytes_received = 0;
-        socklen_t serverlen;
-        if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-            std::cout << "socket creation failed\n";
-            close(sockfd);
-            exit(1);
-        }
-
-       gethostbyname: get the server's DNS entry */
-      /*  server = gethostbyname(SERV_IP);
-        if (server == NULL) {
-            std::cout << "ERROR, no such host as " << SERV_IP << "\n";
-            close(sockfd);
-            exit(1);
-        }
-
-         build the server's Internet address */
-       /* bzero((char *) &serveraddr, sizeof(serveraddr));
-        serveraddr.sin_family = AF_INET;
-        bcopy((char *)server->h_addr,
-        (char *)&serveraddr.sin_addr.s_addr, server->h_length);
-        serveraddr.sin_port = htons(this->udp_port);
-
-        serverlen = sizeof(serveraddr);
-
-        int bytes_sent = sendto(sockfd, "hello", 6, 0, (struct sockaddr *)&serveraddr, serverlen);
-        if (bytes_sent < 0){
-            std::cout << "Could not connect to server\n";
-            close(sockfd);
-            exit(1);
-        }
-
-        bzero(buf, MAX_ARTICLE_LENGTH);
-
-        bytes_received = recvfrom(sockfd, buf, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &serveraddr, &serverlen);
-	      if ( bytes_received < 0) {
-            std::cout << "Did not get response from server\n";
-	          close(sockfd);
-            exit(1);
-        }
-        std::cout << bytes_received << " bytes received for " << buf << "\n";
-        close(sockfd);
-        continueListeningThread = false;
-    }*/
 };
 
-void Listen(Client *c) {
+void Listen(Client *c, int port) {
     // Listen for UDP messages from the server
     while (c->continueListeningThread) {
         std::cout << "Listening...\n";
-        c->listen_for_article();
+        c->listen_for_article(port);
     }
 }
 
-void Client::join(char *ip, int rpc_port) {
-    auto output = join_1(ip, rpc_port, clnt);
+void Client::join(char *ip, int port) {
+    auto output = join_1(ip, port, clnt);
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Join failed for server");
     }
     continueListeningThread = true;
-     t1 = std::thread(Listen, this);
+     t1 = std::thread(Listen, this, port);
 
   // printf("%s:%d has successfully joined the server.\n", IP, Port);
 }
 
-void Client::leave(char *ip, int rpc_port) {
-    auto output = leave_1(ip, rpc_port, clnt);
+void Client::leave(char *ip, int port) {
+    auto output = leave_1(ip, port, clnt);
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Leave failed");
     }
 }
 
-void Client::subscribe(char *ip, int rpc_port, char *art) {
-    auto output = subscribe_1(ip, rpc_port, art, clnt);
+void Client::subscribe(char *ip, int port, char *art) {
+    auto output = subscribe_1(ip, port, art, clnt);
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Subscribe failed");
     }
 }
 
-void Client::unsubscribe(char *ip, int rpc_port, char *art) {
-    auto output = unsubscribe_1(ip, rpc_port, art, clnt);
+void Client::unsubscribe(char *ip, int port, char *art) {
+    auto output = unsubscribe_1(ip, port, art, clnt);
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Unsubscribe failed");
     }
 }
 
-void Client::publish(char *art, char *ip, int rpc_port) {
+void Client::publish(char *art, char *ip, int port) {
     //continueListeningThread = true;
    // t1 = std::thread(Listen, this);
-    auto output = publish_1(art, ip, rpc_port, clnt);
+    auto output = publish_1(art, ip, port, clnt);
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Publish failed");
     }
@@ -199,20 +163,17 @@ void Client::ping() {
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 4) {
-        std::cout << "Usage: ./clientside client_ip rpc_port udp_port\n";
+    if (argc < 3) {
+        std::cout << "Usage: ./clientside client_ip port udp_port\n";
         exit(1);
     }
     char *client_ip = (char *) argv[1];
-    int client_rpc_port = stoi(argv[2]);
+    int client_port = stoi(argv[2]);
     char func[1];
     int func_number;
     char article_string[MAX_ARTICLE_LENGTH];
 
-    Client conn(client_ip, client_rpc_port);
-    conn.udp_port = stoi(argv[3]);
-    //std::thread t1(Listen,&conn);
-    //t1.join();
+    Client conn(client_ip, client_port);
     while (1) {
         std::cout << "Please enter what function you want to perform [1-6]:\n"
                   << "Function description\n1 Ping\n2 Join\n3 Subscribe\n4 Unsubscribe\n5 Publish\n6 Leave\n";
@@ -229,19 +190,19 @@ int main(int argc, char *argv[]) {
                 conn.ping();
                 break;
             case 2:
-                conn.join(client_ip, client_rpc_port);
+                conn.join(client_ip, client_port);
                 break;
             case 3:
-                conn.subscribe(client_ip, client_rpc_port, article_string);
+                conn.subscribe(client_ip, client_port, article_string);
                 break;
             case 4:
-                conn.unsubscribe(client_ip, client_rpc_port, article_string);
+                conn.unsubscribe(client_ip, client_port, article_string);
                 break;
             case 5:
-                conn.publish(article_string, client_ip, client_rpc_port);
+                conn.publish(article_string, client_ip, client_port);
                 break;
             case 6:
-                conn.leave(client_ip, client_rpc_port);
+                conn.leave(client_ip, client_port);
                 break;
             default:
                 std::cout << "Wrong format specified. Please retry \n";
@@ -249,4 +210,3 @@ int main(int argc, char *argv[]) {
         }
     }
 }
-
