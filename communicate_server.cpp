@@ -16,7 +16,7 @@
 
 std::set <Subscriber> subs_list;
 std::set <std::string> legal_types(
-        {"sports", "lifestyle", "entertainment", "business", "technology", "science", "politics", "health", ""});
+        {"Sports", "Lifestyle", "Entertainment", "Business", "Technology", "Science", "Politics", "Health", ""});
 
 int *
 join_1_svc(char *ip, int port, struct svc_req *rqstp) {
@@ -69,10 +69,6 @@ subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
         std::cout << ip
                   << "Type in article should be one of these: <sports,lifestyle,entertainment,business,technology,science,politics,health>\n ";
     }
-
-    /*
-     * insert server code here
-     */
     return &result;
 }
 
