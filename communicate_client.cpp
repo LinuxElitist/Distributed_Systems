@@ -57,11 +57,13 @@ public:
         char buf[MAX_ARTICLE_LENGTH];
         int bytes_received = 0;
         socklen_t serverlen;
-
+        int optval = 1;
         if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
             std::cout << "socket creation failed\n";
+            close(sockfd);
             exit(1);
         }
+        setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,(const void *) &optval, sizeof(int));
 
         /* gethostbyname: get the server's DNS entry */
         server = gethostbyname(SERV_IP);

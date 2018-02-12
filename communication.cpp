@@ -91,4 +91,7 @@ int send_client(const Subscriber &sub, const char *buf) {
         return result;
     }
 
+    close(fd);
+    result = 0;
+    return result;
 }
