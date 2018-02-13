@@ -8,10 +8,13 @@ using std::vector;
 
 
 bool operator<(const Article &lhs, const Article &rhs) {
+
   return tie(lhs.type, lhs.orig, lhs.org) < tie(rhs.type, rhs.orig, rhs.org);
 }
 
+
 vector<string> split(string str, char tok) {
+
   vector<string> strings;
   string tmp = "";
   for (int i = 0; i < str.length(); i++)
@@ -54,8 +57,9 @@ Article::Article(string art) {
 }
 
 vector<Article> Article::getCategory() const {
-  vector<string> in;
+
   vector<Article> out;
+  vector<string> in;
 
   in.push_back(type);
   in.push_back(orig);
@@ -66,11 +70,10 @@ vector<Article> Article::getCategory() const {
 }
 
 
-void Article::stringsplit(
-			  const vector<string> &in, int i, string prev,
+void Article::stringsplit(const vector<string> &in, int i, string prev,
 			  vector<Article> &outs) const {
-  for (i; i < in.size(); i++)
-    {
+
+  for (i; i < in.size(); i++) {
       stringsplit(in, i + 1, prev + in[i] + ";", outs);
       prev += ";";
     }

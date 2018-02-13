@@ -13,6 +13,10 @@
 #include <string>
 #include <string.h>
 
+/*Using set container to store Subscriber list 
+ip and port mapped to unique article
+Slower than unordered_set but we need 
+easy iterator over the stored values */
 
 std::set <Subscriber> subs_list;
 std::set <std::string> legal_types(
@@ -24,7 +28,6 @@ join_1_svc(char *ip, int port, struct svc_req *rqstp) {
 
     Subscriber sub(ip, port);
     subs_list.insert(sub);
-
     result = 0;
     std::cout << ip << " Joined at " << port << "\n";
 
@@ -34,14 +37,15 @@ join_1_svc(char *ip, int port, struct svc_req *rqstp) {
 int *
 leave_1_svc(char *ip, int port, struct svc_req *rqstp) {
     static int result = -1;
-    Subscriber leaving_sub(ip, port);
 
+    Subscriber leaving_sub(ip, port);
     auto client = subs_list.find(leaving_sub);
     if (client != subs_list.end()) {
         subs_list.erase(client);
         std::cout << ip << " Left " << port << "\n";
         result = 0;
-    } else {
+    }
+    else {
         std::cout << ip << " should be joined for it to leave\n";
     }
 
@@ -62,10 +66,12 @@ subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
             (*sub_it).articles.insert(art);
             result = 0;
             std::cout << ip << " subscribed for \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
-        } else {
+        }
+	else {
             std::cout << ip << " should be joined for it to be subscribed\n ";
         }
-    } else {
+    }
+    else {
         std::cout << ip
                   << "Type in article should be one of these: <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>>\n ";
     }
@@ -84,8 +90,8 @@ unsubscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
     } else if (legal_types.find(art.type) != legal_types.end()) {
         auto sub_it = subs_list.find(sub);
         if (sub_it != subs_list.end()) {
-            if ((*sub_it).isSubs(art)) {
-                (*sub_it).unSubs(art);
+            if ((*sub_it).subscribed(art)) {
+                (*sub_it).unsubscribed(art);
                 result = 0;
                 std::cout << ip << " unsubscribed from \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
             } else {
@@ -111,7 +117,7 @@ publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
                   << "\" because Wrong Format for Publish (Atleast one of type, originator ot organization should be presents and contents MUST be present)\n";
     } else if (legal_types.find(art.type) != legal_types.end()) {
         for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it) {
-            if ((*sub_it).isSubs(art)) {
+            if ((*sub_it).subscribed(art)) {
                 result = send_client((*sub_it), article);            ///////pending handling send_client just content or article
                 std::cout << " Published \"" << art.content << "\" to " << ip << "\n";
             } else {

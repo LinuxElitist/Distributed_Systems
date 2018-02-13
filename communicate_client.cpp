@@ -18,15 +18,13 @@ using namespace std;
 class Client {
 
 public:
-
-
   CLIENT *clnt;
-  int PingServer = 5;
-  bool pingthread = false;
-  bool listeningthread = false;
+  int PingServer = 5; //time interval to ping group server
+  bool pingthread = false; 
+  bool listeningthread = false; 
 
-  int sock;
-  char article[MAX_ARTICLE_LENGTH];
+  int sock; //socket descriptor
+  char article[MAX_ARTICLE_LENGTH]; //recieved article
 
   void join(char *ip, int port);
   void leave(char *ip, int port);
@@ -34,18 +32,18 @@ public:
   void unsubscribe(char *ip, int port, char *art);
   void publish(char *art, char *ip, int port);
   void ping(void);
-  std::thread udp_thread;
-  std::thread heartbeat_thread;
-  char *serv_ip;
+  
+  std::thread udp_thread; //thread for udp unicast
+  std::thread heartbeat_thread; //thread for heartbeat
+  char *serv_ip; 
 
-    Client(char *ip, int port, char *serv) {
+  Client(char *ip, int port, char *serv) {
         serv_ip = serv;
         clnt = clnt_create(serv_ip, COMMUNICATE_PROG, COMMUNICATE_VERSION, "udp");
         if (clnt == NULL) {
             clnt_pcreateerror(serv_ip);
             exit(1);
         }
-        //join(ip,port);
          printf("Completed client creation\n");
     }
 
@@ -54,16 +52,17 @@ public:
       udp_thread.join();
       clnt_destroy(clnt);
     }
+  
+  /*Function implementation to receive udp 
+    communication*/
 
-    void listen_for_article(int port) {
-
-       // Waits to receive an article message
+  void listen_for_article(int port) {
       struct sockaddr_in si_other, client_addr;
       int i;
       socklen_t slen=sizeof(si_other);
       int optval=1;
 
-      if ( (sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+      if ((sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
           perror("socket");
           exit(1);
       }
@@ -73,8 +72,7 @@ public:
       si_other.sin_family = AF_INET;
       si_other.sin_port = htons(port);
 
-      if (inet_aton(serv_ip , &si_other.sin_addr) == 0)
-      {
+      if (inet_aton(serv_ip , &si_other.sin_addr) == 0) {
           fprintf(stderr, "inet_aton() failed\n");
           exit(1);
       }
@@ -95,12 +93,10 @@ public:
 
       // Try to receive some data; This is a blocking call
       //TODO : add padding
-      if (recvfrom(sock, article, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &si_other, &slen) == -1)
-      {
+      if (recvfrom(sock, article, MAX_ARTICLE_LENGTH, 0, (struct sockaddr *) &si_other, &slen) == -1) {
           perror("recvfrom()");
           exit(1);
       }
-      //puts(article);
       std::cout << "content received: " << article << "\n";
     }
 };
@@ -116,7 +112,6 @@ void Listen(Client *c, int port) {
 void heartbeat(Client *c) {
   //Ping(Heartbeat) to server
   while (c->pingthread) {
-    //std::cout << "Pinging....\n";
     sleep(c->PingServer);
     c->ping();
   }
@@ -159,8 +154,6 @@ void Client::unsubscribe(char *ip, int port, char *art) {
 }
 
 void Client::publish(char *art, char *ip, int port) {
-    //continueListeningThread = true;
-   // t1 = std::thread(Listen, this);
     auto output = publish_1(art, ip, port, clnt);
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Publish failed");
@@ -172,12 +165,11 @@ void Client::ping() {
     if ((output == NULL)|| (*output < 0)) {
         clnt_perror(clnt, "Cannot ping server");
     }
-    //    fprintf(stderr,"Ping successful");
 }
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 4) {
+  if (argc < 4) {
         std::cout << "Usage: ./clientside client_ip port server_ip\n";
         exit(1);
     }
