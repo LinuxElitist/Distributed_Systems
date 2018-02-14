@@ -5,24 +5,23 @@
 #include <string>
 #include <cstdio>
 
-struct Article {
+struct Article
+{
 public:
-    std::string type, orig, org, content;
 
-    /* Splitting based on ';'in 4 parts */
-    Article(std::string art);
+  // varible declarations for the article when split
+  //Eg:-"Sports;Someone;UMN;contents"
 
-    void print() const;
+  std::string type, orig, org, content;
+  /* Splitting based on ';'in 4 parts */
+  Article(std::string art);
 
-    /* Returns all possible unique combinations of super categories */
-    std::vector<Article> getCategory() const;
-
-    std::string fullString() const;
-
-private:
-
-    void stringsplit(const std::vector<std::string> &in, int i, std::string prev,
-                     std::vector<Article> &outs) const;
+  /* Returns all possible unique combinations of super categories */
+  std::vector<Article> getCategory() const;
+  std::string fullString() const;
+  void print() const;
+  void stringsplit(const std::vector<std::string> &input, int j, std::string prev,
+			  std::vector<Article> &outputs ) const;
 };
 
 /* Comparator struct used by set */

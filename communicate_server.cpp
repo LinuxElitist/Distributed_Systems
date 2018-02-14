@@ -18,9 +18,9 @@
           "Wrong Type of article", "UDP communication from server failed", "Operation Failed" }
 */
 
-std::set<Subscriber> subs_list;
 std::set<std::string> legal_types(
         {"Sports", "Lifestyle", "Entertainment", "Business", "Technology", "Science", "Politics", "Health", ""});
+std::set<Subscriber> subs_list;
 
 int *
 join_1_svc(char *ip, int port, struct svc_req *rqstp) {
