@@ -1,4 +1,5 @@
 #include <iostream>
+#include <istream>
 #include <thread>
 #include <stdlib.h>
 #include <unistd.h>
@@ -103,7 +104,8 @@ public:
             perror("recvfrom()");
             exit(1);
         }
-        std::cout << ".....CONTENT RECEIVED.....: " << article << "\n";
+        Article art(article);
+        std::cout << "..... \"" << art.content << "\" RECEIVED for \"" << art.type << ";" << art.orig << ";" << art.org << "\" .....\n";
     }
 };
 
@@ -179,7 +181,7 @@ void Client::ping() {
     auto output = ping_1(clnt);
     if (output == NULL) {
         clnt_perror(clnt, "Cannot ping server");
-    } 
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -202,13 +204,6 @@ int main(int argc, char *argv[]) {
                   << "Function description\n1 Ping\n2 Join\n3 Subscribe\n4 Unsubscribe\n5 Publish\n6 Leave\n";
         std::cin >> func;
         func_number = stoi(func);
-        if ((func_number == 3) || (func_number == 4) || (func_number == 5)) {
-            std::cout << "Please enter the article for above function: " << "\"Type;Originator;Org;Contents\" One of the first 3 fields must be present.\n"                                                       << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n"
-                      << "Subscription/Unsubscription should not have any content field.\n"
-                      << "Publish MUST have contents\n";
-            std::cin >> article_string;
-        }
-
         switch (func_number) {
             case 1:
                 conn.ping();
@@ -217,12 +212,24 @@ int main(int argc, char *argv[]) {
                 conn.join(client_ip, client_port);
                 break;
             case 3:
+                std::cout << "Please enter the genre of article to subscribe to:\n\"Type;Originator;Org\" One of these fields is a MUST\n"
+                          << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n";
+                std::cin.get(); // ignore the \n from before article is entered
+                std::cin.getline(article_string, MAX_ARTICLE_LENGTH);
                 conn.subscribe(client_ip, client_port, article_string);
                 break;
             case 4:
+                std::cout << "Please enter the genre of article to unsubscribe from:\n\"Type;Originator;Org\" One of these fields is a MUST\n"
+                          << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n";
+                std::cin.get(); // ignore the \n from before article is entered
+                std::cin.getline(article_string, MAX_ARTICLE_LENGTH);
                 conn.unsubscribe(client_ip, client_port, article_string);
                 break;
             case 5:
+                std::cout << "Please enter the genre & content of article to publish to:\n\"Type;Originator;Org;Content\" One of these genres is a MUST along with contents\n"
+                          << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n";
+                std::cin.get(); // ignore the \n from before article is entered
+                std::cin.getline(article_string, MAX_ARTICLE_LENGTH);
                 conn.publish(article_string, client_ip, client_port);
                 break;
             case 6:

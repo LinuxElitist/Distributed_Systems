@@ -9,7 +9,7 @@ XDR=communicate_xdr.cpp
 
 SVC_SRC= $(XDR) $(SVC) communicate_server.cpp article.cpp \
     subscribe.cpp communication.cpp
-CLI_SRC=$(XDR) $(CLI) communicate_client.cpp
+CLI_SRC=$(XDR) $(CLI) communicate_client.cpp article.cpp
 
 CLIENT=clientside
 SERVER=serverside

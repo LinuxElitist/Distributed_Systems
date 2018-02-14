@@ -18,8 +18,7 @@
           "Wrong Type of article", "UDP communication from server failed", "Operation Failed" }
 */
 
-std::set<std::string> legal_types(
-        {"Sports", "Lifestyle", "Entertainment", "Business", "Technology", "Science", "Politics", "Health", ""});
+std::set<std::string> legal_types({"Sports", "Lifestyle", "Entertainment", "Business", "Technology", "Science", "Politics", "Health", ""});
 std::set<Subscriber> subs_list;
 
 int *
@@ -65,7 +64,8 @@ subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
         auto sub_it = subs_list.find(sub);
         if (sub_it != subs_list.end()) {
             (*sub_it).articles.insert(art);
-            std::cout << (*sub_it).ip << " subscribed for \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
+            std::cout << (*sub_it).ip << " subscribed for \"" << art.type << ";" << art.orig << ";" << art.org
+                      << "\"\n";
             err_code = 0;
         } else {
             std::cout << (*sub_it).ip << " should be joined for it to be subscribed\n ";
@@ -94,7 +94,8 @@ unsubscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
         if (sub_it != subs_list.end()) {
             if ((*sub_it).subscribed(art)) {
                 (*sub_it).unsubscribed(art);
-                std::cout << (*sub_it).ip << " unsubscribed from \"" << art.type << ";" << art.orig << ";" << art.org << "\"\n";
+                std::cout << (*sub_it).ip << " unsubscribed from \"" << art.type << ";" << art.orig << ";" << art.org
+                          << "\"\n";
                 err_code = 0;
             } else {
                 std::cout << (*sub_it).ip << " should be subscribed to \"" << article << "\" for unsubscription \n";
@@ -124,7 +125,7 @@ publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
         for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it) {
             if ((*sub_it).subscribed(art)) {
                 err_code = send_client((*sub_it), article);            ///////TODO handling send_client just content or article
-                std::cout << "\"" << article << "\" was published, sent to " << (*sub_it).ip << "\n";
+                std::cout << "\"" << art.content << " for \"" << art.type << ";" << art.orig << ";" << art.org << "\" was published; article sent to " << (*sub_it).ip << "\n";
             } else {
                 err_code = 0;
             }
