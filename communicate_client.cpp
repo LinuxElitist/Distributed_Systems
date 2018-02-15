@@ -1,5 +1,4 @@
 #include <iostream>
-#include <istream>
 #include <thread>
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,6 +14,9 @@
 #define MAX_ARTICLE_LENGTH 120
 
 using namespace std;
+
+class Client;
+void Listen(Client *c, int port);
 
 class Client {
 
@@ -40,10 +42,10 @@ public:
 
     void publish(char *art, char *ip, int port);
 
-    void ping(void);
+    int ping(void);
 
     std::thread udp_thread; //thread for udp unicast
-    std::thread heartbeat_thread; //thread for heartbeat
+
     char *serv_ip;
 
     Client(char *ip, int port, char *serv) {
@@ -57,9 +59,9 @@ public:
     }
 
     ~Client() {
-        heartbeat_thread.join();
-        udp_thread.join();
-        clnt_destroy(clnt);
+      if (clnt){
+	clnt_destroy(clnt); }
+       
     }
 
     /*Function implementation to receive udp communication*/
@@ -95,7 +97,15 @@ public:
             exit(1);
         }
 
-        // Clear the buffer by filling null, it might have previously received data
+	listeningthread = true;
+	udp_thread = std::thread(Listen, this, port);
+	udp_thread.detach();
+	// Clear the buffer by filling null, it might have previously received data
+
+	while (ping() == 0 && listeningthread) {
+	    sleep(PingServer);
+	  }
+	
         memset(article, '\0', MAX_ARTICLE_LENGTH);
 
         // Try to receive some data; This is a blocking call
@@ -104,9 +114,9 @@ public:
             perror("recvfrom()");
             exit(1);
         }
-        Article art(article);
-        std::cout << "..... \"" << art.content << "\" RECEIVED for \"" << art.type << ";" << art.orig << ";" << art.org << "\" .....\n";
+        std::cout << ".....CONTENT RECEIVED.....: " << article << "\n";
     }
+
 };
 
 void Listen(Client *c, int port) {
@@ -117,13 +127,6 @@ void Listen(Client *c, int port) {
     }
 }
 
-void heartbeat(Client *c) {
-    //Ping(Heartbeat) to server
-    while (c->pingthread) {
-        sleep(c->PingServer);
-        c->ping();
-    }
-}
 
 void Client::join(char *ip, int port) {
     auto output = join_1(ip, port, clnt);
@@ -132,13 +135,7 @@ void Client::join(char *ip, int port) {
     } else {
         std::cout << "..... " << error_msg[*output] << " .....\n";
     }
-    pingthread = true;
-    heartbeat_thread = std::thread(heartbeat, this);
-
-    listeningthread = true;
-    udp_thread = std::thread(Listen, this, port);
-
-    // printf("%s:%d has successfully joined the server.\n", IP, Port);
+    
 }
 
 void Client::leave(char *ip, int port) {
@@ -177,11 +174,14 @@ void Client::publish(char *art, char *ip, int port) {
     }
 }
 
-void Client::ping() {
+int Client::ping() {
     auto output = ping_1(clnt);
     if (output == NULL) {
-        clnt_perror(clnt, "Cannot ping server");
+
+      clnt_perror(clnt, "Cannot ping server");
+      return 1;
     }
+    return *output;
 }
 
 int main(int argc, char *argv[]) {
@@ -204,6 +204,13 @@ int main(int argc, char *argv[]) {
                   << "Function description\n1 Ping\n2 Join\n3 Subscribe\n4 Unsubscribe\n5 Publish\n6 Leave\n";
         std::cin >> func;
         func_number = stoi(func);
+        if ((func_number == 3) || (func_number == 4) || (func_number == 5)) {
+            std::cout << "Please enter the article for above function: " << "\"Type;Originator;Org;Contents\" One of the first 3 fields must be present.\n"                                                       << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n"
+                      << "Subscription/Unsubscription should not have any content field.\n"
+                      << "Publish MUST have contents\n";
+            std::cin >> article_string;
+        }
+
         switch (func_number) {
             case 1:
                 conn.ping();
@@ -212,24 +219,12 @@ int main(int argc, char *argv[]) {
                 conn.join(client_ip, client_port);
                 break;
             case 3:
-                std::cout << "Please enter the genre of article to subscribe to:\n\"Type;Originator;Org\" One of these fields is a MUST\n"
-                          << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n";
-                std::cin.get(); // ignore the \n from before article is entered
-                std::cin.getline(article_string, MAX_ARTICLE_LENGTH);
                 conn.subscribe(client_ip, client_port, article_string);
                 break;
             case 4:
-                std::cout << "Please enter the genre of article to unsubscribe from:\n\"Type;Originator;Org\" One of these fields is a MUST\n"
-                          << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n";
-                std::cin.get(); // ignore the \n from before article is entered
-                std::cin.getline(article_string, MAX_ARTICLE_LENGTH);
                 conn.unsubscribe(client_ip, client_port, article_string);
                 break;
             case 5:
-                std::cout << "Please enter the genre & content of article to publish to:\n\"Type;Originator;Org;Content\" One of these genres is a MUST along with contents\n"
-                          << " Type can be <Sports, Lifestyle, Entertainment, Business, Technology, Science, Politics, Health>\n";
-                std::cin.get(); // ignore the \n from before article is entered
-                std::cin.getline(article_string, MAX_ARTICLE_LENGTH);
                 conn.publish(article_string, client_ip, client_port);
                 break;
             case 6:
