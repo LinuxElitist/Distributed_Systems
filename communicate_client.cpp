@@ -22,7 +22,8 @@ class Client {
 
 public:
     CLIENT *clnt;
-    int PingServer = 5; //time interval to ping group server
+    int PingServerPeriod = 5; //time interval to ping group server
+    bool pingthread = false;
     bool listeningthread = false;
 
     int sock; //socket descriptor
@@ -44,7 +45,7 @@ public:
     int ping(void);
 
     std::thread udp_thread; //thread for udp unicast
-
+    std::thread heartbeat_thread; //thread for checking heartbeat while client is joined to the server
     char *serv_ip;
 
     Client(char *ip, int port, char *serv) {
@@ -96,11 +97,7 @@ public:
             exit(1);
         }
 
-	listeningthread = true;
-	udp_thread = std::thread(Listen, this, port);
-	udp_thread.detach();
 	// Clear the buffer by filling null, it might have previously received data
-
         memset(article, '\0', MAX_ARTICLE_LENGTH);
 
         // Try to receive some data; This is a blocking call
@@ -109,9 +106,8 @@ public:
             exit(1);
         }
         Article art(article);
-        std::cout << "..... \"" << art.content << "\" RECEIVED for \"" << art.type << ";" << art.orig << ";" << art.org << "\" .....\n";
+        std::cout << "..... \"" << art.content << "\" RECEIVED for \"" << art.type << ";" << art.orig << ";" << art.org << "\" .....\n";  
     }
-
 };
 
 void Listen(Client *c, int port) {
@@ -122,6 +118,13 @@ void Listen(Client *c, int port) {
     }
 }
 
+void heartbeat(Client *c) {
+    //Ping(Heartbeat) to server
+    while (c->pingthread) {
+        sleep(c->PingServerPeriod);
+        c->ping();
+    }
+}
 
 void Client::join(char *ip, int port) {
     auto output = join_1(ip, port, clnt);
@@ -130,7 +133,14 @@ void Client::join(char *ip, int port) {
     } else {
         std::cout << "..... " << error_msg[*output] << " .....\n";
     }
-    
+    pingthread = true;
+    heartbeat_thread = std::thread(heartbeat, this);
+
+    listeningthread = true;
+    udp_thread = std::thread(Listen, this, port);    
+
+    udp_thread.detach();
+    heartbeat_thread.detach();
 }
 
 void Client::leave(char *ip, int port) {
@@ -140,6 +150,8 @@ void Client::leave(char *ip, int port) {
     } else {
         std::cout << "..... " << error_msg[*output] << " .....\n";
     }
+    listeningthread = false;
+    pingthread = false;
 }
 
 void Client::subscribe(char *ip, int port, char *art) {
@@ -174,9 +186,7 @@ int Client::ping() {
     if (output == NULL) {
         clnt_perror(clnt, "Cannot ping server");
         return 1;
-    } else {
-        std::cout << "..... " << error_msg[*output] << " .....\n";
-    }
+    } //only print to the user if there is failure
     return *output;
 }
 
