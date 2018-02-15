@@ -14,7 +14,7 @@
 #include <string.h>
 
 /*ERROR CODES:
-0 - 7 : { "Success", "Client should first be joined", "Client should first be subscribed", "Wrong Format of article for operation",
+0 - 6 : { "Success", "Client should first be joined", "Client should first be subscribed", "Wrong Format of article for operation",
           "Wrong Type of article", "UDP communication from server failed", "Operation Failed" }
 */
 
@@ -68,7 +68,7 @@ subscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
                       << "\"\n";
             err_code = 0;
         } else {
-            std::cout << (*sub_it).ip << " should be joined for it to be subscribed\n ";
+            std::cout << ip << " should be joined for it to be subscribed\n ";
             err_code = 1;
             //Need not be handled in unsubscribe or publish as first it shd be subscribed which is possible only when it has joined
         }
@@ -102,7 +102,7 @@ unsubscribe_1_svc(char *ip, int port, char *article, struct svc_req *rqstp) {
                 err_code = 2;
             }
         } else {
-            std::cout << (*sub_it).ip << " should be joined for it to unsubscribe\n";
+            std::cout << ip << " should be joined for it to unsubscribe\n";
             err_code = 1;
         }
     } else {
@@ -124,7 +124,7 @@ publish_1_svc(char *article, char *ip, int port, struct svc_req *rqstp) {
     } else if (legal_types.find(art.type) != legal_types.end()) {
         for (auto sub_it = subs_list.begin(); sub_it != subs_list.end(); ++sub_it) {
             if ((*sub_it).subscribed(art)) {
-                err_code = send_client((*sub_it), article);            ///////TODO handling send_client just content or article
+                err_code = send_client((*sub_it), article);
                 std::cout << "\"" << art.content << " for \"" << art.type << ";" << art.orig << ";" << art.org << "\" was published; article sent to " << (*sub_it).ip << "\n";
             } else {
                 err_code = 0;
@@ -142,7 +142,7 @@ int *
 ping_1_svc(struct svc_req *rqstp) {
     static int err_code = 6;
 
-    //std::cout << "ping received\n";
+    std::cout << "ping received\n";
     err_code = 0;
 
     return &err_code;
